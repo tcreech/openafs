@@ -1618,14 +1618,23 @@ afs_vop_advlock(ap)
 				 * int  a_flags;
 				 * } */ *ap;
 {
-    int error;
+    int error, new_a_op;
     struct ucred cr = *osi_curcred();
+
+    new_a_op = ap->a_op;
+    if(ap->a_op == F_UNLCK){
+	/* This makes no sense; I think passing F_UNLCK rather than
+	 * F_SETLCK in FreeBSD's kern_fcntl is a bug. (We certainly aren't
+	 * being asked to F_SETFD, which happens to equal F_UNLCK.) */
+	/* Quietly alter the erroneous op: */
+	new_a_op = F_SETLK;
+    }
 
     AFS_GLOCK();
     error =
 	afs_lockctl(VTOAFS(ap->a_vp),
 		ap->a_fl,
-		ap->a_op, &cr,
+		new_a_op, &cr,
 		(int)(intptr_t)ap->a_id);	/* XXX: no longer unique! */
     AFS_GUNLOCK();
     return error;
