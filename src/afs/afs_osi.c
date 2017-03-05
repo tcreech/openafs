@@ -66,7 +66,7 @@ struct lock afs_global_lock;
 afs_proc_t *afs_global_owner;
 # endif
 #elif defined(AFS_FBSD_ENV)
-struct mtx afs_global_mtx;
+struct sx afs_global_sx;
 struct thread *afs_global_owner;
 #endif
 
