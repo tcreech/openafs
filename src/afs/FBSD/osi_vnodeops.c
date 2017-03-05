@@ -546,16 +546,21 @@ afs_vop_lookup(ap)
 	ma_vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	ma_vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY, p);
 	/* always return the child locked */
+#ifndef AFS_FBSD70_ENV
 	if (lockparent && (flags & ISLASTCN)
 	    && (error = ma_vn_lock(dvp, LK_EXCLUSIVE, p))) {
 	    vput(vp);
 	    DROPNAME();
 	    return (error);
 	}
-    } else if (vp == dvp) {
-	/* they're the same; afs_lookup() already ref'ed the leaf.
-	 * It came in locked, so we don't need to ref OR lock it */
-    } else {
+#endif
+    } else if (vp != dvp) {
+	/* If they were the same, afs_lookup() already ref'ed the leaf.  It
+	 * came in locked, so we didn't need to ref OR lock it.  Otherwise,
+	 * lock dvp and vp according to flags. */
+
+	/* For older FreeBSD, leave the parent locked if
+	 * both LOCKPARENT and ISLASTCN. */
 	if (!lockparent || !(flags & ISLASTCN)) {
 #ifndef AFS_FBSD70_ENV /* 6 too? */
 	    MA_VOP_UNLOCK(dvp, 0, p);	/* done with parent. */
