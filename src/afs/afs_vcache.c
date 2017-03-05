@@ -1757,12 +1757,7 @@ afs_GetVCache(struct VenusFid *afid, struct vrequest *areq,
 	iheldthelock = VOP_ISLOCKED(vp);
 	if (!iheldthelock) {
 	    /* nosleep/sleep lock order reversal */
-	    int glocked = ISAFS_GLOCK();
-	    if (glocked)
-		AFS_GUNLOCK();
 	    vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	    if (glocked)
-		AFS_GLOCK();
 	}
 	vinvalbuf(vp, V_SAVE, PINOD, 0); /* changed late in 8.0-CURRENT */
 	if (!iheldthelock)

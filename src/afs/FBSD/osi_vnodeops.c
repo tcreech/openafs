@@ -339,17 +339,12 @@ afs_vop_unlock(ap)
     int code = 0;
     u_int op;
     op = ((ap->a_flags) | LK_RELEASE) & LK_TYPE_MASK;
-    int glocked = ISAFS_GLOCK();
-    if (glocked)
-	AFS_GUNLOCK();
     if ((op & (op - 1)) != 0) {
       afs_warn("afs_vop_unlock: Shit.\n");
       goto done;
     }
     code = lockmgr(lkp, ap->a_flags | LK_RELEASE, VI_MTX(vp));
  done:
-    if (glocked)
-	AFS_GLOCK();
     return(code);
 #else
     /* possibly in current code path where this
