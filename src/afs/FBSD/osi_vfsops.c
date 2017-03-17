@@ -227,6 +227,7 @@ afs_unmount(struct mount *mp, int flags, struct thread *p)
      * the root vnode (this is just a guess right now).
      */
     if (!error) {
+	AFS_GUNLOCK();
 #if defined(AFS_FBSD80_ENV)
 	error = vflush(mp, 1, (flags & MNT_FORCE) ? FORCECLOSE : 0, curthread);
 #elif defined(AFS_FBSD53_ENV)
@@ -234,6 +235,7 @@ afs_unmount(struct mount *mp, int flags, struct thread *p)
 #else
 	error = vflush(mp, 1, (flags & MNT_FORCE) ? FORCECLOSE : 0);
 #endif
+	AFS_GLOCK();
     }
     if (error) {
 	AFS_GUNLOCK();
