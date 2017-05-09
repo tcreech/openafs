@@ -125,7 +125,7 @@ afs_omount(struct mount *mp, char *path, caddr_t data, struct nameidata *ndp,
     }
 
     afs_globalVFS = mp;
-    mp->vfs_bsize = 8192;
+    mp->vfs_bsize = PAGE_SIZE;
     vfs_getnewfsid(mp);
     /*
      * This is kind of ugly, as the interlock has grown to encompass
@@ -149,7 +149,7 @@ afs_omount(struct mount *mp, char *path, caddr_t data, struct nameidata *ndp,
      * XXX mnt_stat "is considered stable as long as a ref is held".
      * We should check that we hold the only ref.
      */
-    mp->mnt_stat.f_iosize = 8192;
+    mp->mnt_stat.f_iosize = PAGE_SIZE;
 
     if (path != NULL)
 	copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);

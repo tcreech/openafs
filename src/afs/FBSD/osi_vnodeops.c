@@ -70,7 +70,6 @@ static vop_close_t	afs_vop_close;
 static vop_create_t	afs_vop_create;
 static vop_fsync_t	afs_vop_fsync;
 static vop_getattr_t	afs_vop_getattr;
-static vop_getpages_t	afs_vop_getpages;
 static vop_inactive_t	afs_vop_inactive;
 static vop_ioctl_t	afs_vop_ioctl;
 static vop_link_t	afs_vop_link;
@@ -80,7 +79,6 @@ static vop_mknod_t	afs_vop_mknod;
 static vop_open_t	afs_vop_open;
 static vop_pathconf_t	afs_vop_pathconf;
 static vop_print_t	afs_vop_print;
-static vop_putpages_t	afs_vop_putpages;
 static vop_read_t	afs_vop_read;
 static vop_readdir_t	afs_vop_readdir;
 static vop_readlink_t	afs_vop_readlink;
@@ -102,11 +100,12 @@ struct vop_vector afs_vnodeops = {
 	.vop_default =		&default_vnodeops,
 	.vop_access =		afs_vop_access,
 	.vop_advlock =		afs_vop_advlock,
+	.vop_bmap =		vop_stdbmap,
 	.vop_close =		afs_vop_close,
 	.vop_create =		afs_vop_create,
 	.vop_fsync =		afs_vop_fsync,
 	.vop_getattr =		afs_vop_getattr,
-	.vop_getpages =		afs_vop_getpages,
+	.vop_getpages =		vop_stdgetpages,
 	.vop_inactive =		afs_vop_inactive,
 	.vop_ioctl =		afs_vop_ioctl,
 #if !defined(AFS_FBSD80_ENV)
@@ -120,7 +119,7 @@ struct vop_vector afs_vnodeops = {
 	.vop_open =		afs_vop_open,
 	.vop_pathconf =		afs_vop_pathconf,
 	.vop_print =		afs_vop_print,
-	.vop_putpages =		afs_vop_putpages,
+	.vop_putpages =		vop_stdputpages,
 	.vop_read =		afs_vop_read,
 	.vop_readdir =		afs_vop_readdir,
 	.vop_readlink =		afs_vop_readlink,
@@ -151,8 +150,6 @@ int afs_vop_getattr(struct vop_getattr_args *);
 int afs_vop_setattr(struct vop_setattr_args *);
 int afs_vop_read(struct vop_read_args *);
 int afs_vop_write(struct vop_write_args *);
-int afs_vop_getpages(struct vop_getpages_args *);
-int afs_vop_putpages(struct vop_putpages_args *);
 int afs_vop_ioctl(struct vop_ioctl_args *);
 static int afs_vop_pathconf(struct vop_pathconf_args *);
 int afs_vop_fsync(struct vop_fsync_args *);
@@ -186,9 +183,9 @@ struct vnodeopv_entry_desc afs_vnodeop_entries[] = {
     {&vop_create_desc, (vop_t *) afs_vop_create},	/* create */
     {&vop_fsync_desc, (vop_t *) afs_vop_fsync},	/* fsync */
     {&vop_getattr_desc, (vop_t *) afs_vop_getattr},	/* getattr */
-    {&vop_getpages_desc, (vop_t *) afs_vop_getpages},	/* read */
+    {&vop_getpages_desc, (vop_t *) vop_stdgetpages},	/* read */
     {&vop_getvobject_desc, (vop_t *) vop_stdgetvobject},
-    {&vop_putpages_desc, (vop_t *) afs_vop_putpages},	/* write */
+    {&vop_putpages_desc, (vop_t *) vop_stdputpages},	/* write */
     {&vop_inactive_desc, (vop_t *) afs_vop_inactive},	/* inactive */
     {&vop_lease_desc, (vop_t *) vop_null},
     {&vop_link_desc, (vop_t *) afs_vop_link},	/* link */
@@ -777,220 +774,6 @@ afs_vop_read(ap)
     return code;
 }
 
-/* struct vop_getpages_args {
- *	struct vnode *a_vp;
- *	vm_page_t *a_m;
- *	int a_count;
- *	int *a_rbehind;
- *	int *a_rahead;
- * };
- */
-int
-afs_vop_getpages(struct vop_getpages_args *ap)
-{
-    int code;
-    int i, nextoff, size, toff, npages, count;
-    struct uio uio;
-    struct iovec iov;
-    struct buf *bp;
-    vm_offset_t kva;
-    vm_object_t object;
-    vm_page_t *pages;
-    struct vnode *vp;
-    struct vcache *avc;
-
-    memset(&uio, 0, sizeof(uio));
-    memset(&iov, 0, sizeof(iov));
-
-    vp = ap->a_vp;
-    avc = VTOAFS(vp);
-    pages = ap->a_m;
-#ifdef AFS_FBSD110_ENV
-    npages = ap->a_count;
-#else
-    npages = btoc(ap->a_count);
-#endif
-
-    if ((object = vp->v_object) == NULL) {
-	printf("afs_getpages: called with non-merged cache vnode??\n");
-	return VM_PAGER_ERROR;
-    }
-
-    /*
-     * If the requested page is partially valid, just return it and
-     * allow the pager to zero-out the blanks.  Partially valid pages
-     * can only occur at the file EOF.
-     */
-    {
-#ifdef AFS_FBSD110_ENV
-	AFS_VM_OBJECT_WLOCK(object);
-	ma_vm_page_lock_queues();
-	if(pages[npages - 1]->valid != 0) {
-	    if (--npages == 0) {
-		ma_vm_page_unlock_queues();
-		AFS_VM_OBJECT_WUNLOCK(object);
-
-		if (ap->a_rbehind)
-		    *ap->a_rbehind = 0;
-		if (ap->a_rahead)
-		    *ap->a_rahead = 0;
-
-		return (VM_PAGER_OK);
-	    }
-	}
-#else
-	vm_page_t m = pages[ap->a_reqpage];
-	AFS_VM_OBJECT_WLOCK(object);
-	ma_vm_page_lock_queues();
-	if (m->valid != 0) {
-	    /* handled by vm_fault now        */
-	    /* vm_page_zero_invalid(m, TRUE); */
-	    for (i = 0; i < npages; ++i) {
-		if (i != ap->a_reqpage) {
-		    ma_vm_page_lock(pages[i]);
-		    vm_page_free(pages[i]);
-		    ma_vm_page_unlock(pages[i]);
-		}
-	    }
-	    ma_vm_page_unlock_queues();
-	    AFS_VM_OBJECT_WUNLOCK(object);
-	    return (0);
-	}
-#endif
-	ma_vm_page_unlock_queues();
-	AFS_VM_OBJECT_WUNLOCK(object);
-    }
-    bp = getpbuf(&afs_pbuf_freecnt);
-
-    kva = (vm_offset_t) bp->b_data;
-    pmap_qenter(kva, pages, npages);
-    MA_PCPU_INC(cnt.v_vnodein);
-    MA_PCPU_ADD(cnt.v_vnodepgsin, npages);
-
-#ifdef AFS_FBSD110_ENV
-    count = npages << PAGE_SHIFT;
-#else
-    count = ap->a_count;
-#endif
-    iov.iov_base = (caddr_t) kva;
-    iov.iov_len = count;
-    uio.uio_iov = &iov;
-    uio.uio_iovcnt = 1;
-    uio.uio_offset = IDX_TO_OFF(pages[0]->pindex);
-    uio.uio_resid = count;
-    uio.uio_segflg = UIO_SYSSPACE;
-    uio.uio_rw = UIO_READ;
-    uio.uio_td = curthread;
-
-    AFS_GLOCK();
-    osi_FlushPages(avc, osi_curcred());	/* hold GLOCK, but not basic vnode lock */
-    code = afs_read(avc, &uio, osi_curcred(), 0);
-    AFS_GUNLOCK();
-    pmap_qremove(kva, npages);
-
-    relpbuf(bp, &afs_pbuf_freecnt);
-
-    if (code && (uio.uio_resid == count)) {
-#ifndef AFS_FBSD110_ENV
-	AFS_VM_OBJECT_WLOCK(object);
-	ma_vm_page_lock_queues();
-	for (i = 0; i < npages; ++i) {
-	    if (i != ap->a_reqpage)
-		vm_page_free(pages[i]);
-	}
-	ma_vm_page_unlock_queues();
-	AFS_VM_OBJECT_WUNLOCK(object);
-#endif
-	return VM_PAGER_ERROR;
-    }
-
-    size = count - uio.uio_resid;
-    AFS_VM_OBJECT_WLOCK(object);
-    ma_vm_page_lock_queues();
-    for (i = 0, toff = 0; i < npages; i++, toff = nextoff) {
-	vm_page_t m;
-	nextoff = toff + PAGE_SIZE;
-	m = pages[i];
-
-	/* XXX not in nfsclient? */
-	m->flags &= ~PG_ZERO;
-
-	if (nextoff <= size) {
-	    /*
-	     * Read operation filled an entire page
-	     */
-	    m->valid = VM_PAGE_BITS_ALL;
-#ifndef AFS_FBSD80_ENV
-	    vm_page_undirty(m);
-#else
-	    KASSERT(m->dirty == 0, ("afs_getpages: page %p is dirty", m));
-#endif
-	} else if (size > toff) {
-	    /*
-	     * Read operation filled a partial page.
-	     */
-	    m->valid = 0;
-#ifdef AFS_FBSD110_ENV
-	    vm_page_set_valid_range(m, 0, size - toff);
-#else
-	    vm_page_set_validclean(m, 0, size - toff);
-#endif
-	    KASSERT(m->dirty == 0, ("afs_getpages: page %p is dirty", m));
-	}
-
-#ifndef AFS_FBSD110_ENV
-	if (i != ap->a_reqpage) {
-#if __FreeBSD_version >= 1000042
-	    vm_page_readahead_finish(m);
-#else
-	    /*
-	     * Whether or not to leave the page activated is up in
-	     * the air, but we should put the page on a page queue
-	     * somewhere (it already is in the object).  Result:
-	     * It appears that emperical results show that
-	     * deactivating pages is best.
-	     */
-
-	    /*
-	     * Just in case someone was asking for this page we
-	     * now tell them that it is ok to use.
-	     */
-	    if (!code) {
-#if defined(AFS_FBSD70_ENV)
-		if (m->oflags & VPO_WANTED) {
-#else
-		if (m->flags & PG_WANTED) {
-#endif
-		    ma_vm_page_lock(m);
-		    vm_page_activate(m);
-		    ma_vm_page_unlock(m);
-		}
-		else {
-		    ma_vm_page_lock(m);
-		    vm_page_deactivate(m);
-		    ma_vm_page_unlock(m);
-		}
-		vm_page_wakeup(m);
-	    } else {
-		ma_vm_page_lock(m);
-		vm_page_free(m);
-		ma_vm_page_unlock(m);
-	    }
-#endif	/* __FreeBSD_version 1000042 */
-	}
-#endif   /* ndef AFS_FBSD110_ENV */
-    }
-    ma_vm_page_unlock_queues();
-    AFS_VM_OBJECT_WUNLOCK(object);
-#ifdef AFS_FBSD110_ENV
-    if (ap->a_rbehind)
-	*ap->a_rbehind = 0;
-    if (ap->a_rahead)
-	*ap->a_rahead = 0;
-#endif
-    return VM_PAGER_OK;
-}
-
 int
 afs_vop_write(ap)
      struct vop_write_args	/* {
@@ -1008,88 +791,6 @@ afs_vop_write(ap)
 	afs_write(VTOAFS(ap->a_vp), ap->a_uio, ap->a_ioflag, ap->a_cred, 0);
     AFS_GUNLOCK();
     return code;
-}
-
-/*-
- * struct vop_putpages_args {
- *	struct vnode *a_vp;
- *	vm_page_t *a_m;
- *	int a_count;
- *	int a_sync;
- *	int *a_rtvals;
- *	vm_oofset_t a_offset;
- * };
- */
-/*
- * All of the pages passed to us in ap->a_m[] are already marked as busy,
- * so there is no additional locking required to set their flags.  -GAW
- */
-int
-afs_vop_putpages(struct vop_putpages_args *ap)
-{
-    int code;
-    int i, size, npages, sync;
-    struct uio uio;
-    struct iovec iov;
-    struct buf *bp;
-    vm_offset_t kva;
-    struct vnode *vp;
-    struct vcache *avc;
-
-    memset(&uio, 0, sizeof(uio));
-    memset(&iov, 0, sizeof(iov));
-
-    vp = ap->a_vp;
-    avc = VTOAFS(vp);
-    /* Perhaps these two checks should just be KASSERTs instead... */
-    if (vp->v_object == NULL) {
-	printf("afs_putpages: called with non-merged cache vnode??\n");
-	return VM_PAGER_ERROR;	/* XXX I think this is insufficient */
-    }
-    if (vType(avc) != VREG) {
-	printf("afs_putpages: not VREG");
-	return VM_PAGER_ERROR;	/* XXX I think this is insufficient */
-    }
-    npages = btoc(ap->a_count);
-    for (i = 0; i < npages; i++)
-	ap->a_rtvals[i] = VM_PAGER_AGAIN;
-    bp = getpbuf(&afs_pbuf_freecnt);
-
-    kva = (vm_offset_t) bp->b_data;
-    pmap_qenter(kva, ap->a_m, npages);
-    MA_PCPU_INC(cnt.v_vnodeout);
-    MA_PCPU_ADD(cnt.v_vnodepgsout, ap->a_count);
-
-    iov.iov_base = (caddr_t) kva;
-    iov.iov_len = ap->a_count;
-    uio.uio_iov = &iov;
-    uio.uio_iovcnt = 1;
-    uio.uio_offset = IDX_TO_OFF(ap->a_m[0]->pindex);
-    uio.uio_resid = ap->a_count;
-    uio.uio_segflg = UIO_SYSSPACE;
-    uio.uio_rw = UIO_WRITE;
-    uio.uio_td = curthread;
-    sync = IO_VMIO;
-    if (ap->a_sync & VM_PAGER_PUT_SYNC)
-	sync |= IO_SYNC;
-    /*if (ap->a_sync & VM_PAGER_PUT_INVAL)
-     * sync |= IO_INVAL; */
-
-    AFS_GLOCK();
-    code = afs_write(avc, &uio, sync, osi_curcred(), 0);
-    AFS_GUNLOCK();
-
-    pmap_qremove(kva, npages);
-    relpbuf(bp, &afs_pbuf_freecnt);
-
-    if (!code) {
-	size = ap->a_count - uio.uio_resid;
-	for (i = 0; i < round_page(size) / PAGE_SIZE; i++) {
-	    ap->a_rtvals[i] = VM_PAGER_OK;
-	    vm_page_undirty(ap->a_m[i]);
-	}
-    }
-    return ap->a_rtvals[0];
 }
 
 int
@@ -1550,6 +1251,7 @@ afs_vop_bmap(ap)
 				 * int *a_runb;
 				 * } */ *ap;
 {
+    panic("wut");
     if (ap->a_bnp) {
 	*ap->a_bnp = ap->a_bn * (PAGE_SIZE / DEV_BSIZE);
     }
