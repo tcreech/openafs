@@ -1140,6 +1140,7 @@ dkms remove -m %{name} -v %{dkms_version} --rpm_safe_upgrade --all ||:
 %{_mandir}/man1/fs.1.gz
 %{_mandir}/man1/fs_*.1.gz
 %{_mandir}/man1/pagsh.1.gz
+%{_mandir}/man1/pagsh.krb.1.gz
 %{_mandir}/man1/pts.1.gz
 %{_mandir}/man1/pts_*.1.gz
 %{_mandir}/man1/restorevol.1.gz
@@ -1147,6 +1148,7 @@ dkms remove -m %{name} -v %{dkms_version} --rpm_safe_upgrade --all ||:
 %{_mandir}/man1/scout.1.gz
 %{_mandir}/man1/sys.1.gz
 %{_mandir}/man1/tokens.1.gz
+%{_mandir}/man1/tokens.krb.1.gz
 %{_mandir}/man1/translate_et.1.gz
 %{_mandir}/man1/udebug.1.gz
 %{_mandir}/man1/unlog.1.gz
@@ -1205,6 +1207,7 @@ dkms remove -m %{name} -v %{dkms_version} --rpm_safe_upgrade --all ||:
 %endif
 %{_mandir}/man1/cmdebug.1.gz
 %{_mandir}/man1/up.1.gz
+%{_mandir}/man3/AFS::ukernel.3.gz
 %{_mandir}/man5/afs.5.gz
 %{_mandir}/man5/afs_cache.5.gz
 %{_mandir}/man5/afs_volume_header.5.gz
@@ -1350,11 +1353,6 @@ dkms remove -m %{name} -v %{dkms_version} --rpm_safe_upgrade --all ||:
 %{_libdir}/libubik.a
 %{_mandir}/man1/rxgen.1.gz
 %{_mandir}/man1/afs_compile_et.1.gz
-%if 0%{?fedora} >= 15 || 0%{?rhel} >= 6
-%{_libdir}/perl/AFS/ukernel.pm
-%{_libdir}/perl/ukernel.so
-%{_mandir}/man3/AFS::ukernel.3.gz
-%endif
 
 %if %{build_dkmspkg}
 %files -n dkms-%{name}
@@ -1420,8 +1418,6 @@ dkms remove -m %{name} -v %{dkms_version} --rpm_safe_upgrade --all ||:
 %{_mandir}/man1/kapasswd.1.gz
 %{_mandir}/man1/klog.1.gz
 %{_mandir}/man1/klog.krb.1.gz
-%{_mandir}/man1/pagsh.krb.1.gz
-%{_mandir}/man1/tokens.krb.1.gz
 %{_mandir}/man8/kpwvalid.8.gz
 %{_mandir}/man8/kas.8.gz
 %{_mandir}/man8/kas_*.8.gz
