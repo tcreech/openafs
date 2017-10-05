@@ -805,8 +805,12 @@ afs_vop_getpages(struct vop_getpages_args *ap)
     vp = ap->a_vp;
     avc = VTOAFS(vp);
     pages = ap->a_m;
-#ifdef AFS_FBSD110_ENV
+#ifdef FBSD_VOP_GETPAGES_BUSIED
     npages = ap->a_count;
+    if (ap->a_rbehind)
+        *ap->a_rbehind = 0;
+    if (ap->a_rahead)
+        *ap->a_rahead = 0;
 #else
     npages = btoc(ap->a_count);
 #endif
@@ -822,19 +826,13 @@ afs_vop_getpages(struct vop_getpages_args *ap)
      * can only occur at the file EOF.
      */
     {
-#ifdef AFS_FBSD110_ENV
+#ifdef FBSD_VOP_GETPAGES_BUSIED
 	AFS_VM_OBJECT_WLOCK(object);
 	ma_vm_page_lock_queues();
 	if(pages[npages - 1]->valid != 0) {
 	    if (--npages == 0) {
 		ma_vm_page_unlock_queues();
 		AFS_VM_OBJECT_WUNLOCK(object);
-
-		if (ap->a_rbehind)
-		    *ap->a_rbehind = 0;
-		if (ap->a_rahead)
-		    *ap->a_rahead = 0;
-
 		return (VM_PAGER_OK);
 	    }
 	}
@@ -867,8 +865,8 @@ afs_vop_getpages(struct vop_getpages_args *ap)
     MA_PCPU_INC(cnt.v_vnodein);
     MA_PCPU_ADD(cnt.v_vnodepgsin, npages);
 
-#ifdef AFS_FBSD110_ENV
-    count = npages << PAGE_SHIFT;
+#ifdef FBSD_VOP_GETPAGES_BUSIED
+    count = ctob(npages);
 #else
     count = ap->a_count;
 #endif
@@ -891,7 +889,7 @@ afs_vop_getpages(struct vop_getpages_args *ap)
     relpbuf(bp, &afs_pbuf_freecnt);
 
     if (code && (uio.uio_resid == count)) {
-#ifndef AFS_FBSD110_ENV
+#ifndef FBSD_VOP_GETPAGES_BUSIED
 	AFS_VM_OBJECT_WLOCK(object);
 	ma_vm_page_lock_queues();
 	for (i = 0; i < npages; ++i) {
@@ -938,7 +936,7 @@ afs_vop_getpages(struct vop_getpages_args *ap)
 	    KASSERT(m->dirty == 0, ("afs_getpages: page %p is dirty", m));
 	}
 
-#ifndef AFS_FBSD110_ENV
+#ifndef FBSD_VOP_GETPAGES_BUSIED
 	if (i != ap->a_reqpage) {
 #if __FreeBSD_version >= 1000042
 	    vm_page_readahead_finish(m);
@@ -978,16 +976,10 @@ afs_vop_getpages(struct vop_getpages_args *ap)
 	    }
 #endif	/* __FreeBSD_version 1000042 */
 	}
-#endif   /* ndef AFS_FBSD110_ENV */
+#endif   /* ndef FBSD_VOP_GETPAGES_BUSIED */
     }
     ma_vm_page_unlock_queues();
     AFS_VM_OBJECT_WUNLOCK(object);
-#ifdef AFS_FBSD110_ENV
-    if (ap->a_rbehind)
-	*ap->a_rbehind = 0;
-    if (ap->a_rahead)
-	*ap->a_rahead = 0;
-#endif
     return VM_PAGER_OK;
 }
 

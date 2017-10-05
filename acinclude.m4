@@ -931,12 +931,15 @@ case $AFS_SYSNAME in *_linux* | *_umlinux*)
 						unsigned int flags])
 
 		 dnl Check for header files
+		 AC_CHECK_LINUX_HEADER([cred.h])
 		 AC_CHECK_LINUX_HEADER([config.h])
 		 AC_CHECK_LINUX_HEADER([exportfs.h])
 		 AC_CHECK_LINUX_HEADER([freezer.h])
 		 AC_CHECK_LINUX_HEADER([key-type.h])
 		 AC_CHECK_LINUX_HEADER([semaphore.h])
 		 AC_CHECK_LINUX_HEADER([seq_file.h])
+		 AC_CHECK_LINUX_HEADER([sched/signal.h])
+		 AC_CHECK_LINUX_HEADER([uaccess.h])
 
 		 dnl Type existence checks
 		 AC_CHECK_LINUX_TYPE([struct vfs_path], [dcache.h])
@@ -998,12 +1001,19 @@ case $AFS_SYSNAME in *_linux* | *_umlinux*)
 
 		 dnl Function existence checks
 
-		 AC_CHECK_LINUX_FUNC([__vfs_read],
+		 AC_CHECK_LINUX_FUNC([__vfs_write],
 				     [#include <linux/fs.h>],
-				     [__vfs_read(NULL, NULL, 0, NULL);])
+				     [__vfs_write(NULL, NULL, 0, NULL);])
+		 AC_CHECK_LINUX_FUNC([kernel_write],
+				     [#include <linux/fs.h>],
+				     [kernel_write(NULL, NULL, 0, NULL);])
                  AC_CHECK_LINUX_FUNC([bdi_init],
 				     [#include <linux/backing-dev.h>],
 				     [bdi_init(NULL);])
+                 AC_CHECK_LINUX_FUNC([super_setup_bdi],
+                                     [#include <linux/backing-dev.h>],
+                                     [struct super_block *sb;
+				      super_setup_bdi(sb);])
                  AC_CHECK_LINUX_FUNC([PageChecked],
 				     [#include <linux/mm.h>
 #include <linux/page-flags.h>],
@@ -1173,6 +1183,7 @@ case $AFS_SYSNAME in *_linux* | *_umlinux*)
 		 LINUX_REGISTER_SYSCTL_TABLE_NOFLAG
 		 LINUX_HAVE_DCACHE_LOCK
 		 LINUX_D_COUNT_IS_INT
+		 LINUX_IOP_GETATTR_TAKES_PATH_STRUCT
 		 LINUX_IOP_MKDIR_TAKES_UMODE_T
 		 LINUX_IOP_CREATE_TAKES_UMODE_T
 		 LINUX_EXPORT_OP_ENCODE_FH_TAKES_INODES
