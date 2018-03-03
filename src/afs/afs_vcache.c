@@ -1752,7 +1752,13 @@ afs_GetVCache(struct VenusFid *afid, struct vrequest *areq)
 	    if (glocked)
 		AFS_GLOCK();
 	}
+#if defined(FBSD_VINVALBUF_HAS_VMIO)
+	// At some point vinvalbuf learned a V_VMIO flag, which avoids waiting
+	// on the paging_in_progress counter.
+	vinvalbuf(vp, V_SAVE|V_VMIO, PINOD, 0);
+#else // otherwise, vinvalbuf does not understand V_VMIO yet
 	vinvalbuf(vp, V_SAVE, PINOD, 0); /* changed late in 8.0-CURRENT */
+#endif
 	if (!iheldthelock)
 	    VOP_UNLOCK(vp, 0);
 #elif defined(AFS_OBSD_ENV)
