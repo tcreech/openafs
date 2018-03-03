@@ -1772,6 +1772,12 @@ afs_GetVCache(struct VenusFid *afid, struct vrequest *areq,
     // not have had even known the vp yet. (E.g., when using "afs_lookup".)
     // For now, only do the vinvalbuf when we already have the vp locked.
     if (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) {
+#if defined(FBSD_VINVALBUF_HAS_VMIO)
+        // Note: we can hold our sx(9)-based GLOCK here.
+        // At some point vinvalbuf learned a V_VMIO flag, which avoids waiting
+        // on the paging_in_progress counter.
+        vinvalbuf(vp, V_SAVE|V_VMIO, PINOD, 0);
+#else // otherwise, vinvalbuf does not understand V_VMIO yet
 	// Skip vinvalbuf if we're a pager or else we deadlock waiting for
 	// ourselves.
 	if( vp && vp->v_bufobj.bo_object &&
@@ -1783,6 +1789,7 @@ afs_GetVCache(struct VenusFid *afid, struct vrequest *areq,
 	    // Note: we can hold our sx(9)-based GLOCK here.
 	    vinvalbuf(vp, V_SAVE, PINOD, 0); /* changed late in 8.0-CURRENT */
 	}
+#endif // FBSD_VINVALBUF_HAS_VMIO
     }
 #elif defined(AFS_FBSD60_ENV)
 	iheldthelock = VOP_ISLOCKED(vp, curthread);
