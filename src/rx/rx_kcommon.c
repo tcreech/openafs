@@ -660,7 +660,11 @@ rxi_GetIFInfo(void)
 #if defined(AFS_DARWIN_ENV) || defined(AFS_FBSD_ENV)
 #if defined(AFS_FBSD_ENV)
     CURVNET_SET(rx_socket->so_vnet);
+#if defined(AFS_FBSD120_ENV)
+    CK_STAILQ_FOREACH(ifn, &V_ifnet, if_link) {
+#else
     TAILQ_FOREACH(ifn, &V_ifnet, if_link) {
+#endif
 #else
     TAILQ_FOREACH(ifn, &ifnet, if_link) {
 #endif
@@ -674,7 +678,14 @@ rxi_GetIFInfo(void)
 #endif
 	rxmtu = (ifn->if_mtu - RX_IPUDP_SIZE);
 #if defined(AFS_DARWIN_ENV) || defined(AFS_FBSD_ENV)
+#if defined(AFS_FBSD120_ENV)
+	CK_STAILQ_FOREACH(ifad, &ifn->if_addrhead, ifa_link) {
+#else
 	TAILQ_FOREACH(ifad, &ifn->if_addrhead, ifa_link) {
+#endif
+#if defined(AFS_FBSD_ENV)
+            IF_ADDR_RLOCK(ifn);
+#endif
 	    if (i >= ADDRSPERSITE)
 		break;
 #elif defined(AFS_OBSD_ENV) || defined(AFS_NBSD_ENV)
@@ -705,6 +716,9 @@ rxi_GetIFInfo(void)
 			MIN(rx_maxReceiveSize, rx_maxReceiveSizeUser);
 		}
 	    }
+#if defined(AFS_FBSD_ENV)
+            IF_ADDR_RUNLOCK(ifn);
+#endif
 	}
     }
 #endif
@@ -740,6 +754,10 @@ rxi_FindIfnet(afs_uint32 addr, afs_uint32 * maskp)
 
 #ifdef AFS_FBSD_ENV
     CURVNET_SET(rx_socket->so_vnet);
+    IFNET_RLOCK();
+#ifdef AFS_FBSD120_ENV
+    NET_EPOCH_ENTER();
+#endif
 #endif
 
     s.sin_family = AF_INET;
@@ -754,6 +772,10 @@ rxi_FindIfnet(afs_uint32 addr, afs_uint32 * maskp)
     ret = (ifad ? rx_ifaddr_ifnet(ifad) : NULL);
 
 #ifdef AFS_FBSD_ENV
+#ifdef AFS_FBSD120_ENV
+    NET_EPOCH_EXIT();
+#endif
+    IFNET_RUNLOCK();
     CURVNET_RESTORE();
 #endif
 
