@@ -92,6 +92,10 @@
 
 #define p_rcred p_ucred
 
+#ifndef LINK_MAX
+#define LINK_MAX 32767
+#endif
+
 # if !defined(ASSEMBLER) && !defined(__LANGUAGE_ASSEMBLY__)
 enum vcexcl { NONEXCL, EXCL };
 
