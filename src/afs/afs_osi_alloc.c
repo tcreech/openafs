@@ -52,6 +52,8 @@ afs_osi_Alloc(size_t size)
     AFS_STATS(afs_stats_cmperf.OutStandingMemUsage += size);
 #ifdef AFS_LINUX20_ENV
     return osi_linux_alloc(size, 1);
+#elif defined(AFS_FBSD_ENV)
+    return osi_fbsd_alloc(size, 0);
 #else
     return AFS_KALLOC(size);
 #endif
