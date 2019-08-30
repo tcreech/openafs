@@ -61,6 +61,9 @@
 #include <vm/vm_object.h>
 #include <vm/vm_pager.h>
 #include <vm/vnode_pager.h>
+#if defined(AFS_FBSD120_ENV)
+#include <sys/vmmeter.h>
+#endif
 extern int afs_pbuf_freecnt;
 
 static vop_access_t	afs_vop_access;
@@ -146,8 +149,13 @@ static __inline void ma_vm_page_unlock(vm_page_t m) { vm_page_unlock(m); };
 #define MA_VOP_LOCK(vp, flags, p) (VOP_LOCK(vp, flags))
 #define MA_VOP_UNLOCK(vp, flags, p) (VOP_UNLOCK(vp, flags))
 
-#define MA_PCPU_INC(c) PCPU_INC(c)
-#define	MA_PCPU_ADD(c, n) PCPU_ADD(c, n)
+#if defined(AFS_FBSD120_ENV)
+#define MA_PCPU_INC(c) VM_CNT_INC(c)
+#define MA_PCPU_ADD(c, n) VM_CNT_ADD(c, n)
+#else
+#define MA_PCPU_INC(c) PCPU_INC(cnt.c)
+#define MA_PCPU_ADD(c, n) PCPU_ADD(cnt.c, n)
+#endif
 
 #if __FreeBSD_version >= 1000030
 #define AFS_VM_OBJECT_WLOCK(o)	VM_OBJECT_WLOCK(o)
@@ -656,8 +664,8 @@ afs_vop_getpages(struct vop_getpages_args *ap)
 
     kva = (vm_offset_t) bp->b_data;
     pmap_qenter(kva, pages, npages);
-    MA_PCPU_INC(cnt.v_vnodein);
-    MA_PCPU_ADD(cnt.v_vnodepgsin, npages);
+    MA_PCPU_INC(v_vnodein);
+    MA_PCPU_ADD(v_vnodepgsin, npages);
 
 #ifdef FBSD_VOP_GETPAGES_BUSIED
     count = ctob(npages);
@@ -831,8 +839,8 @@ afs_vop_putpages(struct vop_putpages_args *ap)
 
     kva = (vm_offset_t) bp->b_data;
     pmap_qenter(kva, ap->a_m, npages);
-    MA_PCPU_INC(cnt.v_vnodeout);
-    MA_PCPU_ADD(cnt.v_vnodepgsout, ap->a_count);
+    MA_PCPU_INC(v_vnodeout);
+    MA_PCPU_ADD(v_vnodepgsout, ap->a_count);
 
     iov.iov_base = (caddr_t) kva;
     iov.iov_len = ap->a_count;
