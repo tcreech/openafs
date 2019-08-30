@@ -38,7 +38,13 @@ afs_init(struct vfsconf *vfc)
 {
     int code;
     int offset = AFS_SYSCALL;
-#if defined(FBSD_SYSCALL_REGISTER_FOUR_ARGS)
+#if defined(AFS_FBSD120_ENV)
+    struct syscall_helper_data afs_syscalls[] = {
+        { .new_sysent = afs_sysent, .syscall_no = AFS_SYSCALL },
+        SYSCALL_INIT_LAST
+    };
+    code = syscall_helper_register(afs_syscalls, 0);
+#elif defined(FBSD_SYSCALL_REGISTER_FOUR_ARGS)
     code = syscall_register(&offset, &afs_sysent, &old_sysent, 0);
 #else
     code = syscall_register(&offset, &afs_sysent, &old_sysent);
@@ -59,7 +65,16 @@ afs_uninit(struct vfsconf *vfc)
 
     if (afs_globalVFS)
 	return EBUSY;
+
+#if defined(AFS_FBSD120_ENV)
+    struct syscall_helper_data afs_syscalls[] = {
+        { .old_sysent = old_sysent, .syscall_no = AFS_SYSCALL },
+        SYSCALL_INIT_LAST
+    };
+    syscall_helper_unregister(afs_syscalls);
+#else
     syscall_deregister(&offset, &old_sysent);
+#endif
     return 0;
 }
 
