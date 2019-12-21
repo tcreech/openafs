@@ -10,6 +10,8 @@
 #include <afsconfig.h>
 #include <afs/param.h>
 
+#ifndef AFS_NAMEI_ENV
+
 #include <roken.h>
 
 #include <ctype.h>
@@ -243,3 +245,5 @@ afs_rawname(char *devfile)
 
     return NULL;
 }
+
+#endif /* ASF_NAMEI_ENV */
