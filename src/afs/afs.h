@@ -969,8 +969,8 @@ struct vcache {
     struct cred *cred;		/* last writer's cred */
     struct bhv_desc vc_bhv_desc;	/* vnode's behavior data. */
 #endif				/* AFS_SGI_ENV */
-#if defined(AFS_LINUX_ENV)
-    cred_t *cred;		/* last writer's cred */
+#if defined(AFS_LINUX_ENV) || defined(AFS_FBSD_ENV)
+    afs_ucred_t *cred;		/* last writer's cred */
 #endif
 #ifdef AFS_LINUX_ENV
     struct dentry *target_link; /* dentry we prefer, when we are redirecting
