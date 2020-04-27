@@ -757,7 +757,6 @@ static void
 shutdown_server(void)
 {
     int i;
-    struct afs_cbr *tcbrp, *tbrp;
     struct srvAddr *sa;
 
     for (i = 0; i < NSERVERS; i++) {
@@ -774,13 +773,6 @@ shutdown_server(void)
 		     * here */
 		    afs_ReleaseConns(sa->conns);
 		}
-	    }
-	    for (tcbrp = ts->cbrs; tcbrp; tcbrp = tbrp) {
-		/*
-		 * Free all server's callback structs
-		 */
-		tbrp = tcbrp->next;
-		afs_FreeCBR(tcbrp);
 	    }
 	    afs_osi_Free(ts, sizeof(struct server));
 	    ts = next;
