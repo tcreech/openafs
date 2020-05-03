@@ -529,7 +529,9 @@ afs_ConnBySA(struct srvAddr *sap, unsigned short aport, afs_int32 acell,
 	 */
 	if ((service != 52) && (sap->natping == NULL)) {
 	    sap->natping = tc;
+	    AFS_GUNLOCK();
 	    rx_SetConnSecondsUntilNatPing(tc->id, 20);
+	    AFS_GLOCK();
 	}
 
 	tc->forceConnectFS = 0;	/* apparently we're appropriately connected now */
@@ -539,7 +541,9 @@ afs_ConnBySA(struct srvAddr *sap, unsigned short aport, afs_int32 acell,
     } /* end of if (tc->forceConnectFS)*/
 
     *rxconn = tc->id;
+    AFS_GUNLOCK();
     rx_GetConnection(*rxconn);
+    AFS_GLOCK();
 
     ReleaseSharedLock(&afs_xconn);
     return tc;
@@ -669,7 +673,9 @@ afs_PutConn(struct afs_conn *ac, struct rx_connection *rxconn,
 	          (unsigned long)(uintptrsz)ac, (int)ac->refCount);
     }
     ac->parent->refCount--;
+    AFS_GUNLOCK();
     rx_PutConnection(rxconn);
+    AFS_GLOCK();
 }				/*afs_PutConn */
 
 
