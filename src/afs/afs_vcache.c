@@ -1838,6 +1838,7 @@ afs_GetVCache(struct VenusFid *afid, struct vrequest *areq)
      * is locked, and if it isn't, then we gain and drop it around the call
      * to vinvalbuf; otherwise, we leave it alone.
      */
+    ReleaseWriteLock(&tvc->lock);
     {
 	struct vnode *vp = AFSTOV(tvc);
 	int iheldthelock;
@@ -1846,14 +1847,9 @@ afs_GetVCache(struct VenusFid *afid, struct vrequest *areq)
 	iheldthelock = VOP_ISLOCKED(vp);
 	if (!iheldthelock)
 	    vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, current_proc());
-	/* this is messy. we can call fsync which will try to reobtain this */
-	if (VTOAFS(vp) == tvc)
-	  ReleaseWriteLock(&tvc->lock);
 	if (UBCINFOEXISTS(vp)) {
 	  vinvalbuf(vp, V_SAVE, &afs_osi_cred, current_proc(), PINOD, 0);
 	}
-	if (VTOAFS(vp) == tvc)
-	  ObtainWriteLock(&tvc->lock, 954);
 	if (!iheldthelock)
 	    VOP_UNLOCK(vp, LK_EXCLUSIVE, current_proc());
 #  elif defined(AFS_FBSD_ENV)
@@ -1885,6 +1881,11 @@ afs_GetVCache(struct VenusFid *afid, struct vrequest *areq)
 	if (!iheldthelock)
 	    VOP_UNLOCK(vp, 0);
 #  endif
+    }
+    ObtainWriteLock(&tvc->lock, 954);
+    if (tvc->f.states & CStatd) {
+	ReleaseWriteLock(&tvc->lock);
+	return tvc;
     }
 # endif
 #endif
