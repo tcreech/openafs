@@ -48,6 +48,7 @@
 #endif
 
 #define RXK_LISTENER_ENV	1
+#define AFS_PAG_ONEGROUP_ENV	1	/* Use a single gid to indicate a PAG */
 #define AFS_GCPAGS		0	/* if nonzero, garbage collect PAGs */
 #define AFS_USE_GETTIMEOFDAY	1	/* use gettimeofday to implement rx clock */
 
