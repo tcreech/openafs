@@ -244,7 +244,11 @@ afs_vop_lookup(ap)
      */
 
     if (flags & ISDOTDOT)
+#if defined(AFS_FBSD_VOP_UNLOCK_NOFLAGS)
+	VOP_UNLOCK(dvp);
+#else
 	VOP_UNLOCK(dvp, 0);
+#endif /* AFS_FBSD_VOP_UNLOCK_NOFLAGS */
 
     AFS_GLOCK();
     error = afs_lookup(VTOAFS(dvp), name, &vcp, cnp->cn_cred);
@@ -883,7 +887,11 @@ afs_vop_link(ap)
     error = afs_link(VTOAFS(vp), VTOAFS(dvp), name, cnp->cn_cred);
     AFS_GUNLOCK();
     if (dvp != vp)
+#if defined(AFS_FBSD_VOP_UNLOCK_NOFLAGS)
+	VOP_UNLOCK(vp);
+#else
 	VOP_UNLOCK(vp, 0);
+#endif /* AFS_FBSD_VOP_UNLOCK_NOFLAGS */
   out:
     DROPNAME();
     return error;
@@ -1189,7 +1197,11 @@ afs_vop_reclaim(struct vop_reclaim_args *ap)
      * the vnode lock, and we need afs_xvcache. So drop the vnode lock in order
      * to hold afs_xvcache.
      */
+#if defined(AFS_FBSD_VOP_UNLOCK_NOFLAGS)
+    VOP_UNLOCK(vp);
+#else
     VOP_UNLOCK(vp, 0);
+#endif /* AFS_FBSD_VOP_UNLOCK_NOFLAGS */
 
     if (!haveGlock)
 	AFS_GLOCK();
