@@ -173,6 +173,11 @@ enum vcexcl { NONEXCL, EXCL };
 # define AFS_FBSD_UMA_BUFS
 #endif
 
+/* 67d0e293048 removed OBJ_MIGHTBEDIRTY in favor of vm_object_mightbedirty */
+#if __FreeBSD_version >= 1300054
+# define AFS_FBSD_MIGHTBEDIRTY_HELPER
+#endif
+
 #else /* !defined(UKERNEL) */
 
 /* This section for user space compiles only */
