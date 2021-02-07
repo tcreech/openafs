@@ -162,6 +162,11 @@ enum vcexcl { NONEXCL, EXCL };
 #  define VN_IS_DOOMED(vp) ((vp)->v_iflag & VI_DOOMED)
 # endif
 
+/* 756a5412798 removed getpbuf in favor of UMA */
+#if __FreeBSD_version >= 1300008
+# define AFS_FBSD_UMA_BUFS
+#endif
+
 #else /* !defined(UKERNEL) */
 
 /* This section for user space compiles only */
