@@ -50,7 +50,11 @@
 
 #define	lock_vnode(v, f)	vn_lock((v), (f))
 #define ilock_vnode(v)	vn_lock((v), LK_INTERLOCK|LK_EXCLUSIVE|LK_RETRY)
+#if defined(AFS_FBSD_VOP_UNLOCK_NOFLAGS)
+#define unlock_vnode(v)	VOP_UNLOCK(v)
+#else
 #define unlock_vnode(v)	VOP_UNLOCK((v), 0)
+#endif /* AFS_FBSD_VOP_UNLOCK_NOFLAGS */
 #define islocked_vnode(v)	VOP_ISLOCKED((v))
 
 #if __FreeBSD_version >= 1000030
