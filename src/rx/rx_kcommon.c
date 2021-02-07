@@ -678,7 +678,9 @@ rxi_GetIFInfo(void)
 	    if (i >= ADDRSPERSITE)
 		break;
 #   elif defined(AFS_FBSD_ENV)
+#    if !defined(AFS_FBSD_EXPLICIT_EPOCH_TRACKER)
 	if_addr_rlock(ifn);
+#    endif
 	AFS_FBSD_NET_FOREACH(ifad, &ifn->if_addrhead, ifa_link) {
 	    if (i >= ADDRSPERSITE)
 		break;
@@ -712,7 +714,9 @@ rxi_GetIFInfo(void)
 	    }
 	}
 #   ifdef AFS_FBSD_ENV
+#    if !defined(AFS_FBSD_EXPLICIT_EPOCH_TRACKER)
 	if_addr_runlock(ifn);
+#    endif
 #   endif
     }
 #  endif /* !AFS_DARWIN80_ENV */
