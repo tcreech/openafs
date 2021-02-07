@@ -368,14 +368,14 @@ afs_vop_close(ap)
 				 * struct thread *a_td;
 				 * } */ *ap;
 {
-    int code, iflag;
+    int code, doomed;
     struct vnode *vp = ap->a_vp;
     struct vcache *avc = VTOAFS(vp);
 
     VI_LOCK(vp);
-    iflag = vp->v_iflag & VI_DOOMED;
+    doomed = VN_IS_DOOMED(vp);
     VI_UNLOCK(vp);
-    if (iflag & VI_DOOMED) {
+    if (doomed) {
         /* osi_FlushVCache (correctly) calls vgone() on recycled vnodes, we don't
          * have an afs_close to process, in that case */
         if (avc->opens != 0)
