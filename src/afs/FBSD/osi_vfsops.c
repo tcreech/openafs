@@ -232,7 +232,11 @@ tryagain:
 
 	ASSERT_VI_UNLOCKED(vp, "afs_root");
 	AFS_GUNLOCK();
+#ifdef AFS_FBSD_VGET_NOTHREAD
+	error = vget(vp, LK_EXCLUSIVE | LK_RETRY);
+#else
 	error = vget(vp, LK_EXCLUSIVE | LK_RETRY, td);
+#endif /* AFS_FBSD_VGET_NOTHREAD */
 	AFS_GLOCK();
 	if (error != 0)
 	    goto tryagain;
