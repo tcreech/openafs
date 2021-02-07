@@ -1258,7 +1258,11 @@ afs_syscall_pioctl(char *path, unsigned int com, caddr_t cmarg, int follow)
 #else
 #if defined(AFS_FBSD_ENV)
     if (VOP_ISLOCKED(vp) == LK_EXCLUSIVE)
+#if defined(AFS_FBSD_VOP_UNLOCK_NOFLAGS)
+	VOP_UNLOCK(vp);
+#else
 	VOP_UNLOCK(vp, 0);
+#endif /* AFS_FBSD_VOP_UNLOCK_NOFLAGS */
 #endif /* AFS_FBSD_ENV */
 	AFS_RELE(vp);		/* put vnode back */
 #endif

@@ -144,6 +144,11 @@ enum vcexcl { NONEXCL, EXCL };
 # define AFS_FBSD_NET_FOREACH TAILQ_FOREACH
 #endif
 
+/* b249ce48ea5 removed the flags argument from VOP_UNLOCK */
+#if __FreeBSD_version >= 1300074
+# define AFS_FBSD_VOP_UNLOCK_NOFLAGS
+#endif
+
 #else /* !defined(UKERNEL) */
 
 /* This section for user space compiles only */
