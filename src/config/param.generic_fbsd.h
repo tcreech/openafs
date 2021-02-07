@@ -150,6 +150,11 @@ enum vcexcl { NONEXCL, EXCL };
 # define AFS_FBSD_VOP_UNLOCK_NOFLAGS
 #endif
 
+/* a68cc388790 requires explicit epoch_tracker declarations */
+#if __FreeBSD_version >= 1300008
+# define AFS_FBSD_EXPLICIT_EPOCH_TRACKER
+#endif
+
 /* a92a971bbb9 removed the thread argument from vget */
 #if __FreeBSD_version >= 1300109
 # define AFS_FBSD_VGET_NOTHREAD
