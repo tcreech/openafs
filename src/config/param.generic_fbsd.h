@@ -154,6 +154,14 @@ enum vcexcl { NONEXCL, EXCL };
 # define AFS_FBSD_VGET_NOTHREAD
 #endif
 
+/* abd80ddb947 removed the VI_DOOMED flag, introducing VN_IS_DOOMED() */ 
+# if __FreeBSD_version >= 1300063
+/* VN_IS_DOOMED() will be defined by <sys/vnode.h> */
+# else
+/* For older FreeBSD, define an equivalent VN_IS_DOOMED() macro */
+#  define VN_IS_DOOMED(vp) ((vp)->v_iflag & VI_DOOMED)
+# endif
+
 #else /* !defined(UKERNEL) */
 
 /* This section for user space compiles only */
