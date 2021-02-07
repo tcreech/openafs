@@ -1102,8 +1102,9 @@ afs_vop_symlink(struct vop_symlink_args *ap)
     dvp = ap->a_dvp;
     newvp = NULL;
 
+    // __DECONST needed as of 1493c2ee62b8
     error =
-	afs_symlink(VTOAFS(dvp), name, ap->a_vap, ap->a_target, NULL,
+	afs_symlink(VTOAFS(dvp), name, ap->a_vap, __DECONST(char*, ap->a_target), NULL,
 		    cnp->cn_cred);
     if (error == 0) {
 	error = afs_lookup(VTOAFS(dvp), name, &vcp, cnp->cn_cred);
