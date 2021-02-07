@@ -30,7 +30,7 @@ osi_TryEvictVCache(struct vcache *avc, int *slept, int defersleep)
 	return evicted;
     }
 
-    if ((vp->v_iflag & VI_DOOMED) != 0) {
+    if (VN_IS_DOOMED(vp)) {
 	VI_UNLOCK(vp);
 	evicted = 1;
 	return evicted;
@@ -141,7 +141,7 @@ osi_vnhold(struct vcache *avc)
 
     vref(vp);
     VI_LOCK(vp);
-    if ((vp->v_iflag & VI_DOOMED) != 0) {
+    if (VN_IS_DOOMED(vp)) {
 	VI_UNLOCK(vp);
 	vrele(vp);
 	return ENOENT;
