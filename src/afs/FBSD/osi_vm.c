@@ -114,6 +114,7 @@ osi_VM_StoreAllSegments(struct vcache *avc)
 {
     struct vnode *vp;
     struct vm_object *obj;
+    int mightbedirty;
 
     vp = AFSTOV(avc);
     /*
@@ -127,7 +128,13 @@ osi_VM_StoreAllSegments(struct vcache *avc)
 
     obj = vp->v_object;
 
-    if (obj != NULL && (obj->flags & OBJ_MIGHTBEDIRTY) != 0) {
+#if defined(AFS_FBSD_MIGHTBEDIRTY_HELPER)
+    mightbedirty = (obj != NULL && vm_object_mightbedirty(obj));
+#else
+    mightbedirty = (obj != NULL && (obj->flags & OBJ_MIGHTBEDIRTY) != 0);
+#endif
+
+    if (mightbedirty) {
 	ReleaseWriteLock(&avc->lock);
 	AFS_GUNLOCK();
 
