@@ -1285,7 +1285,7 @@ afs_vop_print(ap)
     struct vcache *vc = VTOAFS(ap->a_vp);
     int s = vc->f.states;
 
-    printf("vc %p vp %p tag %s, fid: %d.%d.%d.%d, opens %d, writers %d", vc, vp, vp->v_tag,
+    printf("vc %p vp %p, fid: %d.%d.%d.%d, opens %d, writers %d", vc, vp,
 	   (int)vc->f.fid.Cell, (u_int) vc->f.fid.Fid.Volume,
 	   (u_int) vc->f.fid.Fid.Vnode, (u_int) vc->f.fid.Fid.Unique, vc->opens,
 	   vc->execsOrWriters);
