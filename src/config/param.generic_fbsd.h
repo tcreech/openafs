@@ -177,6 +177,11 @@ enum vcexcl { NONEXCL, EXCL };
 # define AFS_FBSD_MIGHTBEDIRTY_HELPER
 #endif
 
+/* 6fa079fc3f5 requires explicit registration of the vector of vnode ops */
+#if __FreeBSD_version >= 1300067
+# define AFS_FBSD_HAS_VOP_VECTOR_REGISTER
+#endif
+
 #else /* !defined(UKERNEL) */
 
 /* This section for user space compiles only */
