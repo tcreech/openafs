@@ -75,7 +75,7 @@ AFS_OS_CLEAN=$(GEN_KBLD_DIR)
 $(GEN_KBLD_DIR):
 	-mkdir $(GEN_KBLD_DIR)
 	cd $(KSRC)/$(MACHINE)/conf && \
-		/usr/sbin/config -d $(GEN_KBLD_DIR) GENERIC
+		/usr/sbin/config -s $(KSRC) -d $(GEN_KBLD_DIR) GENERIC
 
 # setup for bsd.kmod.mk infrastructure
 .PATH:	${TOP_SRCDIR}/afs/FBSD
