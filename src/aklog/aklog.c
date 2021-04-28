@@ -150,9 +150,9 @@ static int get_user_realm(krb5_context, char **);
 		     x == KRB5KRB_ERR_GENERIC)
 
 #if defined(HAVE_KRB5_PRINC_SIZE) || defined(krb5_princ_size)
-
-#define get_princ_str(c, p, n) krb5_princ_component(c, p, n)->data
-#define get_princ_len(c, p, n) krb5_princ_component(c, p, n)->length
+#define krb5_princ_component_old(context, princ,i) ((princ)->data + i)
+#define get_princ_str(c, p, n) krb5_princ_component_old(c, p, n)->data
+#define get_princ_len(c, p, n) krb5_princ_component_old(c, p, n)->length
 #define second_comp(c, p) (krb5_princ_size(c, p) > 1)
 #define realm_data(c, p) krb5_princ_realm(c, p)->data
 #define realm_len(c, p) krb5_princ_realm(c, p)->length
