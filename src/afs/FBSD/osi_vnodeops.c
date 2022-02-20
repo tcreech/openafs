@@ -1308,6 +1308,7 @@ afs_vop_advlock(ap)
 {
     int error, a_op;
     struct ucred cr = *osi_curcred();
+    struct vnode *vp = ap->a_vp;
 
     a_op = ap->a_op;
     if (a_op == F_UNLCK) {
@@ -1321,6 +1322,7 @@ afs_vop_advlock(ap)
 	a_op = F_SETLK;
     }
 
+    vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
     AFS_GLOCK();
     error =
 	afs_lockctl(VTOAFS(ap->a_vp),
@@ -1328,6 +1330,11 @@ afs_vop_advlock(ap)
 		a_op, &cr,
 		(int)(intptr_t)ap->a_id);	/* XXX: no longer unique! */
     AFS_GUNLOCK();
+#if defined(AFS_FBSD_VOP_UNLOCK_NOFLAGS)
+	VOP_UNLOCK(vp);
+#else
+	VOP_UNLOCK(vp, 0);
+#endif /* AFS_FBSD_VOP_UNLOCK_NOFLAGS */
     return error;
 }
 
