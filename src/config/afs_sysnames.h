@@ -381,6 +381,8 @@
 #define SYS_NAME_ID_amd64_fbsd_131     3066
 #define SYS_NAME_ID_amd64_fbsd_132     3067
 
+#define SYS_NAME_ID_arm64_fbsd_132     3200
+
 #define SYS_NAME_ID_amd64_w2k           3400
 
 #define SYS_NAME_ID_i64_w2k             3500
