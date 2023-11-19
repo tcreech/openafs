@@ -84,6 +84,12 @@ extern int afs_pbuf_freecnt;
 # define AFS_LINK_MAX (32767)
 #endif
 
+#if __FreeBSD_version >= 1400074
+# define RELOOKUP(DVP, VPP, CNP) vfs_relookup(DVP, VPP, CNP, false)
+#else
+# define RELOOKUP(DVP, VPP, CNP) relookup(DVP, VPP, CNP)
+#endif
+
 /*
  * Here we define compatibility functions/macros for interfaces that
  * have changed between different FreeBSD versions.
@@ -265,8 +271,10 @@ afs_vop_lookup(ap)
 	if ((cnp->cn_nameiop == CREATE || cnp->cn_nameiop == RENAME)
 	    && (flags & ISLASTCN) && error == ENOENT)
 	    error = EJUSTRETURN;
+#if __FreeBSD_version < 1400068
 	if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
 	    cnp->cn_flags |= SAVENAME;
+#endif
 	DROPNAME();
 	*ap->a_vpp = 0;
 	return (error);
@@ -285,8 +293,10 @@ afs_vop_lookup(ap)
     }
     *ap->a_vpp = vp;
 
+#if __FreeBSD_version < 1400068
     if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
 	cnp->cn_flags |= SAVENAME;
+#endif
 
     DROPNAME();
     return error;
@@ -977,11 +987,13 @@ afs_vop_rename(ap)
 	vrele(fvp);
 	fcnp->cn_flags &= ~MODMASK;
 	fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
+#if __FreeBSD_version < 1400075
 	if ((fcnp->cn_flags & SAVESTART) == 0)
 	    panic("afs_rename: lost from startdir");
+#endif
 	fcnp->cn_nameiop = DELETE;
 	VREF(fdvp);
-	error = relookup(fdvp, &fvp, fcnp);
+	error = RELOOKUP(fdvp, &fvp, fcnp);
 	if (error == 0)
 	    vrele(fdvp);
 	if (fvp == NULL) {
