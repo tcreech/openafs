@@ -40,14 +40,23 @@ osi_lookupname(char *aname, enum uio_seg seg, int followlink,
 	flags |= FOLLOW;
     else
 	flags |= NOFOLLOW;
-    NDINIT(&n, LOOKUP, flags, seg, aname, curthread);
+#if __FreeBSD_version >= 1400043 /* Thread argument removed in 7e1d3eef. */
+    NDINIT(&n, LOOKUP, flags, seg, aname);
+#else
+    NDINIT(&n, LOOKUP, flags, seg, aname , curthread);
+#endif
     if ((error = namei(&n)) != 0) {
 	if (glocked)
 	    AFS_GLOCK();
 	return error;
     }
     *vpp = n.ni_vp;
+#if __FreeBSD_version >= 1400074 /* NDFREE retired in 269c564b */
+    vrele(n.ni_vp);
+    NDFREE_PNBUF(&n);
+#else
     NDFREE(&n, NDF_ONLY_PNBUF);
+#endif
     if (glocked)
 	AFS_GLOCK();
     return 0;
