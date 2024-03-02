@@ -138,6 +138,24 @@ int
 osi_vnhold(struct vcache *avc)
 {
     struct vnode *vp = AFSTOV(avc);
+    /* Due to the practice of dropping the GLOCK in osi_AttachVnode, it is
+     * possible that we end up with two threads in
+     * afs_vop_lookup->afs_lookup->afs_DoBulkStat simultaneously. In one case I
+     * saw thread X in afs_NewBulkVCache->afs_NewVCache_int->osi_AttachVnode
+     * on a vcache while thread Y is attempting to call osi_vnhold on the same
+     * vcache, which leads to a panic in vref.
+     *
+     * Presumably thread X, in osi_vnhold, had already called afs_NewVCache and
+     * assigned a new vnode to the vcache, but this vnode pointer was cleared
+     * by thread Y's osi_PrePopulateVCache before X got to osi_vnhold.
+     *
+     * There's no way just failing osi_vnhold in thread X is the right thing to
+     * do, but I'll try it to see how often I get the warning.
+     */
+    if (vp == NULL) {
+        afs_warn("afs: osi_vnhold on freed vcache 0x%p?\n", avc);
+	return ENOENT;
+    }
 
     vref(vp);
     VI_LOCK(vp);
