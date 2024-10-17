@@ -1342,11 +1342,7 @@ afs_vop_advlock(ap)
 		a_op, &cr,
 		(int)(intptr_t)ap->a_id);	/* XXX: no longer unique! */
     AFS_GUNLOCK();
-#if defined(AFS_FBSD_VOP_UNLOCK_NOFLAGS)
-	VOP_UNLOCK(vp);
-#else
-	VOP_UNLOCK(vp, 0);
-#endif /* AFS_FBSD_VOP_UNLOCK_NOFLAGS */
+	AFS_VOP_UNLOCK(vp);
     return error;
 }
 
