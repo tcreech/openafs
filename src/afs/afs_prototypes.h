@@ -779,7 +779,7 @@ extern int afs_xioctl(struct inode *ip, struct file *fp, unsigned int com, unsig
 #elif defined(AFS_DAWRIN_ENV) & !defined(AFS_DARWIN80)
 extern int afs_xioctl(afs_proc_t *p, struct ioctl_args *uap, register_t *retval);
 #elif defined(AFS_FBSD_ENV)
-extern int afs_xioctl(struct thread *td, struct ioctl_args *uap, register_t *retval);
+//extern int afs_xioctl(struct thread *td, struct ioctl_args *uap, register_t *retval);
 #elif defined(AFS_NBSD_ENV)
 extern int afs_xioctl(afs_proc_t *p, const struct sys_ioctl_args *uap, register_t *retval);
 #elif defined(AFS_XBSD_ENV)
