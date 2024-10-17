@@ -36,8 +36,10 @@
 
 #include "err.h"
 
+#ifndef AFS_FBSD_ENV
 #ifndef HAVE___PROGNAME
 const char *__progname;
+#endif
 #endif
 
 #ifndef HAVE_GETPROGNAME
