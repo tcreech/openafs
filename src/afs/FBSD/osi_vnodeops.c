@@ -1053,9 +1053,11 @@ afs_vop_mkdir(ap)
     struct vcache *vcp;
 
     GETNAME();
-#ifdef DIAGNOSTIC
+#if __FreeBSD_version < 1400068
+# ifdef DIAGNOSTIC
     if ((cnp->cn_flags & HASBUF) == 0)
 	panic("afs_vop_mkdir: no name");
+# endif
 #endif
     AFS_GLOCK();
     error = afs_mkdir(VTOAFS(dvp), name, vap, &vcp, cnp->cn_cred);
