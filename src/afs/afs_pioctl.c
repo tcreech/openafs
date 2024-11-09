@@ -1253,11 +1253,13 @@ afs_syscall_pioctl(char *path, unsigned int com, caddr_t cmarg, int follow)
 	dput(dp);
 	AFS_GLOCK();
 #else
+#if !defined(AFS_FBSD140_ENV)
 #if defined(AFS_FBSD_ENV)
     if (VOP_ISLOCKED(vp) == LK_EXCLUSIVE)
 	AFS_VOP_UNLOCK(vp);
 #endif /* AFS_FBSD_ENV */
 	AFS_RELE(vp);		/* put vnode back */
+#endif // ! AFS_FBSD140_ENV
 #endif
     }
     PIOCTL_FREE_CRED();
