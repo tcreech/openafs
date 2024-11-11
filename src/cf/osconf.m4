@@ -138,7 +138,7 @@ case $AFS_SYSNAME in
 		XCFLAGS="-pipe"
 		;;
 
-	amd64_fbsd_*)
+	arm64_fbsd_*|amd64_fbsd_*)
 		MT_CFLAGS='-pthread -D_REENTRANT'
 		PAM_CFLAGS="-O2 -pipe -fPIC"
 		SHLIB_LINKER="${CC} -shared"
