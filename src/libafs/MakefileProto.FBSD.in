@@ -111,7 +111,11 @@ setup: $(KERNBUILDDIR)
 	-$(RM) $(KOBJ)/Makefile $(KOBJ)/Makefile.common
 	$(CP) Makefile $(KOBJ)/Makefile
 	echo ".include <bsd.kmod.mk>" >> $(KOBJ)/Makefile
-	sed -e 's/^install:/afsinstall:/' Makefile.common > $(KOBJ)/Makefile.common
+	sed \
+	  -e 's/^install:/afsinstall:/' \
+	  -e '/CRULE_OPT.*\<rand-timer\.c/s/CRULE_OPT/CRULE_OPT:N-mgeneral-regs-only/' \
+	  -e '/CRULE_OPT.*\<rand-fortuna\.c/s/CRULE_OPT/CRULE_OPT:N-mgeneral-regs-only/' \
+	  Makefile.common > $(KOBJ)/Makefile.common
 	-$(RM) -f h
 	-ln -fs ${KSRC}/sys h
 
