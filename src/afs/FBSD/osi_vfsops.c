@@ -141,8 +141,14 @@ afs_omount(struct mount *mp, char *path, caddr_t data)
      */
     mp->mnt_stat.f_iosize = 8192;
 
-    if (path != NULL)
-	copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
+    if (path != NULL) {
+	int r = copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
+	if (r != 0) {
+		MNT_IUNLOCK(mp);
+		AFS_GUNLOCK();
+		return EINVAL;
+	}
+    }
     else
 	bcopy("/afs", mp->mnt_stat.f_mntonname, size = 4);
     memset(mp->mnt_stat.f_mntonname + size, 0, MNAMELEN - size);
