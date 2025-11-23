@@ -25,6 +25,7 @@
 #include <sys/sx.h>
 #include <sys/vnode.h>
 #include <sys/priv.h>
+#include <vm/uma.h>
 
 /*
  * Time related macros

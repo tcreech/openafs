@@ -51,6 +51,9 @@
 # ifdef AFS_DARWIN_ENV
 #  include <net/if_var.h>
 # endif
+# ifdef AFS_FBSD_ENV
+#  include <net/if_private.h>
+# endif
 #endif /* !defined(UKERNEL) */
 
 #include "afsincludes.h"	/* Afs-based standard headers */
