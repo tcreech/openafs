@@ -47,6 +47,9 @@
 #else
 #define	AFS_MINBUFFERS	50
 #endif
+#if defined(AFS_FBSD150_ENV)
+# include <net/if_private.h>
+#endif
 
 #if (defined(AFS_SUN5_ENV) || defined(AFS_LINUX_ENV) || defined(AFS_DARWIN80_ENV)) && !defined(UKERNEL)
 /* If AFS_DAEMONOP_ENV is defined, it indicates we run "daemon" AFS syscalls by
