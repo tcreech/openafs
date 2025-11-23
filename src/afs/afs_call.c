@@ -42,6 +42,10 @@
 # include <mach/thread_act.h>
 #endif
 
+#if defined(AFS_FBSD150_ENV)
+# include <net/if_private.h>
+#endif
+
 #define AFS_MINBUFFERS 2048
 
 #if (defined(AFS_SUN5_ENV) || defined(AFS_LINUX_ENV) || defined(AFS_DARWIN80_ENV)) && !defined(UKERNEL)
