@@ -391,6 +391,7 @@
 #define SYS_NAME_ID_arm64_fbsd_141     3211
 #define SYS_NAME_ID_arm64_fbsd_142     3212
 #define SYS_NAME_ID_arm64_fbsd_143     3213
+#define SYS_NAME_ID_arm64_fbsd_150     3220
 
 #define SYS_NAME_ID_amd64_w2k           3400
 
