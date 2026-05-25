@@ -386,9 +386,9 @@ afs_vop_open(ap)
     if (AFSTOV(vc) != ap->a_vp)
 	panic("AFS open changed vnode!");
 #endif
-    AFS_GUNLOCK();
     vnode_create_vobject(ap->a_vp, vc->f.m.Length, ap->a_td);
     osi_FlushPages(vc, ap->a_cred);
+    AFS_GUNLOCK();
     return error;
 }
 
