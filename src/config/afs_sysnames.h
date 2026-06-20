@@ -387,6 +387,7 @@
 #define SYS_NAME_ID_amd64_fbsd_142     3082
 #define SYS_NAME_ID_amd64_fbsd_143     3083
 #define SYS_NAME_ID_amd64_fbsd_150     3090
+#define SYS_NAME_ID_amd64_fbsd_151     3091
 
 #define SYS_NAME_ID_arm64_fbsd_132     3200
 #define SYS_NAME_ID_arm64_fbsd_140     3210
@@ -394,6 +395,7 @@
 #define SYS_NAME_ID_arm64_fbsd_142     3212
 #define SYS_NAME_ID_arm64_fbsd_143     3213
 #define SYS_NAME_ID_arm64_fbsd_150     3220
+#define SYS_NAME_ID_arm64_fbsd_151     3221
 
 #define SYS_NAME_ID_amd64_w2k           3400
 
